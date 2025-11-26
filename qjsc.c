@@ -174,6 +174,9 @@ static void output_object_code(JSContext *ctx,
     namelist_add(&cname_list, c_name, NULL, load_only);
 
     if (output_type == OUTPUT_RAW) {
+        printf("name: %s len=%zu load_only=%d\n", c_name, out_buf_len, load_only);
+        fwrite(&load_only, sizeof(uint8_t), 1, fo);
+        fwrite(&out_buf_len, sizeof(uint64_t), 1, fo);
         fwrite(out_buf, 1, out_buf_len, fo);
     } else {
         fprintf(fo, "const uint32_t %s_size = %u;\n\n",
@@ -549,6 +552,9 @@ int main(int argc, char **argv)
         namelist_add(&cmodule_list, "std", "std", 0);
         namelist_add(&cmodule_list, "os", "os", 0);
         namelist_add(&cmodule_list, "bjson", "bjson", 0);
+
+        namelist_add(&cmodule_list, "Jni", "Jni", 0);
+        namelist_add(&cmodule_list, "ColorList", "ColorList", 0);
     }
 
     if (optind >= argc)
