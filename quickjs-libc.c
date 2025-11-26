@@ -4618,6 +4618,40 @@ void js_std_eval_binary(JSContext *ctx, const uint8_t *buf, size_t buf_len,
     }
 }
 
+bool js_std_eval_binary_bool(JSContext *ctx, const uint8_t *buf, size_t buf_len,
+                        int load_only)
+{
+    JSValue obj, val;
+    obj = JS_ReadObject(ctx, buf, buf_len, JS_READ_OBJ_BYTECODE);
+    if (JS_IsException(obj))
+        goto exception;
+    if (load_only) {
+        if (JS_VALUE_GET_TAG(obj) == JS_TAG_MODULE) {
+            if (js_module_set_import_meta(ctx, obj, false, false) < 0)
+                goto exception;
+        }
+        JS_FreeValue(ctx, obj);
+    } else {
+        if (JS_VALUE_GET_TAG(obj) == JS_TAG_MODULE) {
+            if (JS_ResolveModule(ctx, obj) < 0) {
+                JS_FreeValue(ctx, obj);
+                goto exception;
+            }
+            if (js_module_set_import_meta(ctx, obj, false, true) < 0)
+                goto exception;
+            val = JS_EvalFunction(ctx, obj);
+            val = js_std_await(ctx, val);
+        } else {
+            val = JS_EvalFunction(ctx, obj);
+        }
+        if (JS_IsException(val)) {
+        exception:
+            return false;
+        }
+    }
+    return true;
+}
+
 static JSValue js_bjson_read(JSContext *ctx, JSValueConst this_val,
                              int argc, JSValueConst *argv)
 {

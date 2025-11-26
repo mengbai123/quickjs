@@ -60,6 +60,8 @@ JS_EXTERN JSModuleDef *js_module_loader(JSContext *ctx,
                                         const char *module_name, void *opaque);
 JS_EXTERN void js_std_eval_binary(JSContext *ctx, const uint8_t *buf,
                                   size_t buf_len, int flags);
+JS_EXTERN bool js_std_eval_binary_bool(JSContext *ctx, const uint8_t *buf,
+                                  size_t buf_len, int flags);
 JS_EXTERN void js_std_promise_rejection_tracker(JSContext *ctx,
                                                 JSValueConst promise,
                                                 JSValueConst reason,
