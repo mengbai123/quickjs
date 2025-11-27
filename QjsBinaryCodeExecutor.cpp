@@ -35,6 +35,23 @@ void QjsBinaryCodeExecutor::loadModulesFromFile(const std::string &filename) {
 
     modules_.clear(); // 清空已有模块
 
+    bc_version_ = 0;  // 重置版本号
+
+    // === 读取字节码版本头（4字节）===
+    uint32_t bc_version;
+    if (fread(&bc_version, sizeof(uint32_t), 1, f) != 1) {
+        fclose(f);
+        reportError("无法读取字节码版本头");
+        return;
+    }
+    bc_version_ = bc_version;
+    debugLog("字节码版本: " + std::to_string(bc_version));
+
+    // 可选：验证版本号是否符合预期
+    if (bc_version != 2072) {
+        debugLog("警告: 未知的字节码版本，可能无法正确加载");
+    }
+
     int module_index = 0;
     while (true) {
         // 分别读取 load_only (1字节) 和 data_length (8字节)

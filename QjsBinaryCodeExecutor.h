@@ -191,12 +191,17 @@ public:
      */
     const std::string &getXorSecret() const { return xor_secret_; }
 
+    uint32_t getBytecodeVersion() const { return bc_version_; }
+
 private:
     // 模块数据结构
     struct Module {
         bool load_only; // 是否为预加载模块
         std::vector<uint8_t> data; // 字节码数据
     };
+
+    uint32_t bc_version_ = 0;  // 字节码版本号
+    std::string xor_secret_; // XOR 加密密钥
 
     std::vector<Module> modules_; // 存储所有加载的模块
     JSRuntime *runtime_ = nullptr; // JS 运行时实例
@@ -212,7 +217,7 @@ private:
     std::string entryFile_ = "main.js"; // 入口执行文件路径，默认为 main.js
     ExecutionMode executionMode_ = ExecutionMode::BINARY; // 执行模式，默认为二进制模式
 
-    std::string xor_secret_; // XOR 加密密钥
+
 
     // 创建自定义上下文（供 Worker 线程调用）
     JSContext *createCustomContext(JSRuntime *rt) const;

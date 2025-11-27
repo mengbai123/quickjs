@@ -61,6 +61,7 @@ static const char *c_ident_prefix = "qjsc_";
 static int strip;
 
 const char *xor_secret;
+bool is_out_bc_head = false;
 
 void namelist_add(namelist_t *lp, const char *name, const char *short_name,
                   int flags)
@@ -176,6 +177,15 @@ static void output_object_code(JSContext *ctx,
     namelist_add(&cname_list, c_name, NULL, load_only);
 
     if (output_type == OUTPUT_RAW) {
+
+        if (!is_out_bc_head) {
+            // 输出二进制代码的文件头
+            uint32_t bc_version = 2072;
+            fwrite(&bc_version, sizeof(uint32_t), 1, fo);
+            printf("bc_head version: %d\n", bc_version);
+            is_out_bc_head = true;
+        }
+
         printf("name: %s len=%zu load_only=%d\n", c_name, out_buf_len, load_only);
         printf("xor_secret: %s\n", xor_secret);
 
