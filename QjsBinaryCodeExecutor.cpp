@@ -116,30 +116,40 @@ JSContext *QjsBinaryCodeExecutor::createCustomContext(JSRuntime *rt) const {
 
 
 // 获取异常堆栈信息
-std::string QjsBinaryCodeExecutor::getExceptionStack() const {
+void QjsBinaryCodeExecutor::getExceptionStack() const {
     JSValue exception = JS_GetException(context_);
     const char *err_cstr = JS_ToCString(context_, exception);
     if (!err_cstr) {
         JS_FreeValue(context_, exception);
-        return "Unknown error: failed to convert exception to string";
+        return;
     }
 
     std::string result;
     if (JS_IsError(exception)) {
+        JSValue name_val = JS_GetPropertyStr(context_, exception, "name");
+        JSValue message_val = JS_GetPropertyStr(context_, exception, "message");
         JSValue stack_val = JS_GetPropertyStr(context_, exception, "stack");
-        if (!JS_IsUndefined(stack_val)) {
-            const char *stack_cstr = JS_ToCString(context_, stack_val);
-            if (stack_cstr) {
-                result = std::string(err_cstr) + "\n" + std::string(stack_cstr);
-                JS_FreeCString(context_, stack_cstr);
-            }
-            JS_FreeValue(context_, stack_val);
+
+        const char *name_cstr = JS_ToCString(context_, name_val);
+        const char *message_cstr = JS_ToCString(context_, message_val);
+        const char *stack_cstr = JS_ToCString(context_, stack_val);
+
+        if (jsErrorCallback_) {
+            jsErrorCallback_(runtime_, context_, name_cstr ? name_cstr : "", message_cstr ? message_cstr : "",
+                             stack_cstr ? stack_cstr : "");
         }
+
+        JS_FreeCString(context_, name_cstr);
+        JS_FreeCString(context_, message_cstr);
+        JS_FreeCString(context_, stack_cstr);
+
+        JS_FreeValue(context_, name_val);
+        JS_FreeValue(context_, message_val);
+        JS_FreeValue(context_, stack_val);
     }
 
     JS_FreeCString(context_, err_cstr);
     JS_FreeValue(context_, exception);
-    return result;
 }
 
 // 触发错误回调
@@ -172,6 +182,10 @@ int QjsBinaryCodeExecutor::execute() {
         return -1;
     }
 
+    if (afterRuntimeCreateCallback_) {
+        afterRuntimeCreateCallback_(runtime_);
+    }
+
     // 初始化标准库处理器
     js_std_init_handlers(runtime_);
 
@@ -199,13 +213,13 @@ int QjsBinaryCodeExecutor::execute() {
                                           JS_EVAL_TYPE_MODULE);
         if (JS_HasException(context_)) {
             debugLog("has exception!");
-            reportError(getExceptionStack());
+            getExceptionStack();
         } else {
             const JSValue pr = JS_PromiseResult(context_, runResult);
             if (JS_IsException(pr) || JS_IsError(pr)) {
                 // 主动抛出一个 getExceptionStack() 可以捕获
                 JS_Throw(context_, pr);
-                reportError(getExceptionStack());
+                getExceptionStack();
             } else {
                 // Promise 正常 resolved，释放 如果throw了不用释放
                 JS_FreeValue(context_, pr);
@@ -222,7 +236,7 @@ int QjsBinaryCodeExecutor::execute() {
                 bool runSuccess = js_std_eval_binary_bool(context_, module.data.data(), module.data.size(),
                                                           module.load_only);
                 if (!runSuccess) {
-                    reportError(getExceptionStack());
+                    getExceptionStack();
                 }
                 has_entry = true;
             }

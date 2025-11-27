@@ -5,14 +5,11 @@
 
 #include <cstdio>
 #include <iostream>
-#include <windows.h>
-
 #include "QjsBinaryCodeExecutor.h"
 
 int main(int argc, char **argv) {
     printf("argc = %d\n", argc);
 
-    SetConsoleOutputCP(CP_UTF8);
 
     for (int i = 1; i < 20; i++) {
         std::cout << "第 " << i << " 次执行" << std::endl;

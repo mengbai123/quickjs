@@ -111,6 +111,10 @@ public:
         errorCallback_ = std::move(callback);
     }
 
+    void onJsError(std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &, const std::string &)> callback) {
+        jsErrorCallback_ = std::move(callback);
+    }
+
     /**
      * @brief 设置执行后回调函数
      * @param callback 在代码执行完成、事件循环结束后调用的回调
@@ -160,6 +164,10 @@ public:
         afterContextCreateCallback_ = std::move(callback);
     }
 
+    void afterRuntimeCreate(std::function<void(JSRuntime *)> callback) {
+        afterRuntimeCreateCallback_ = std::move(callback);
+    }
+
     // 获取内部 JS 运行时和上下文（用于高级操作）
     JSRuntime *runtime() const noexcept { return runtime_; }
     JSContext *context() const noexcept { return context_; }
@@ -178,9 +186,11 @@ private:
     JSRuntime *runtime_ = nullptr; // JS 运行时实例
     JSContext *context_ = nullptr; // JS 上下文实例
     std::function<void(JSRuntime *, JSContext *, const std::string &)> errorCallback_; // 错误回调
+    std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &, const std::string &)> jsErrorCallback_; // 错误回调
     std::function<void(JSRuntime *, JSContext *)> afterExecuteCallback_; // 执行完成后回调
     std::function<void(JSRuntime *, JSContext *)> beforeReleaseCallback_; // 资源释放前回调
     std::function<void(JSRuntime *, JSContext *)> afterContextCreateCallback_; // 上下文创建后回调
+    std::function<void(JSRuntime *)> afterRuntimeCreateCallback_; // 上下文创建后回调
     bool debugEnabled_ = false; // 调试模式开关
     std::string entryFile_ = "main.js"; // 入口执行文件路径，默认为 main.js
     ExecutionMode executionMode_ = ExecutionMode::BINARY; // 执行模式，默认为二进制模式
@@ -189,7 +199,7 @@ private:
     JSContext *createCustomContext(JSRuntime *rt) const;
 
     // 获取异常堆栈信息
-    std::string getExceptionStack() const;
+    void getExceptionStack() const;
 
     // 触发错误回调
     void reportError(const std::string &msg) const;
