@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(quickjs LANGUAGES C)
+project(quickjs LANGUAGES C CXX)
 
 include(CheckCCompilerFlag)
 include(GNUInstallDirs)
@@ -9,6 +9,11 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_C_STANDARD 11)
+
+# 添加 C++ 标准配置（建议 C++11 或更高）
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)  # 或 14/17，根据你的需求
+set(CMAKE_CXX_EXTENSIONS OFF)  # 禁用编译器扩展，保持移植性
 
 # MINGW doesn't exist in older cmake versions, newer versions don't know
 # about CMAKE_COMPILER_IS_MINGW, and there is no unique CMAKE_C_COMPILER_ID
@@ -242,6 +247,8 @@ set(qjs_sources
     libregexp.c
     libunicode.c
     quickjs.c
+#    qjs_bc.c
+    QjsBinaryCodeExecutor.cpp
 )
 
 if(QJS_BUILD_LIBC)
@@ -303,6 +310,13 @@ endif()
 add_executable(qjsc
     qjsc.c
 )
+add_executable(test
+        test.cpp
+        QjsBinaryCodeExecutor.cpp
+)
+add_qjs_libc_if_needed(test)
+target_compile_definitions(test PRIVATE ${qjs_defines})
+target_link_libraries(test qjs)
 add_qjs_libc_if_needed(qjsc)
 add_static_if_needed(qjsc)
 target_compile_definitions(qjsc PRIVATE ${qjs_defines})
