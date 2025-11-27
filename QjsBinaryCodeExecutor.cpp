@@ -289,7 +289,13 @@ int QjsBinaryCodeExecutor::execute() {
 
 // 调试输出辅助函数
 void QjsBinaryCodeExecutor::debugLog(const std::string &msg) const {
-    if (debugEnabled_) {
+    if (!debugEnabled_)
+        return;
+    if (logCallback_) {
+        // 使用自定义回调
+        logCallback_("[DEBUG] " + msg);
+    } else {
+        // 默认回退到标准输出
         printf("[DEBUG] %s\n", msg.c_str());
     }
 }

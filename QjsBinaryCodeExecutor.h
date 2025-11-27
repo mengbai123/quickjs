@@ -193,6 +193,14 @@ public:
 
     uint32_t getBytecodeVersion() const { return bc_version_; }
 
+    /**
+     * 主要方便安卓上打印日志
+     * @param callback
+     */
+    void setLogCallback(std::function<void(const std::string&)> callback) {
+        logCallback_ = std::move(callback);
+    }
+
 private:
     // 模块数据结构
     struct Module {
@@ -230,6 +238,8 @@ private:
 
     // 调试输出辅助函数
     void debugLog(const std::string &msg) const;
+
+    std::function<void(const std::string&)> logCallback_; // 日志回调
 
     // 读取文件内容到字符串
     std::string readFileToString(const std::string &filepath) const;

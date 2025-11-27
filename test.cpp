@@ -23,9 +23,13 @@ int main(int argc, char **argv) {
         // 创建执行器
         QjsBinaryCodeExecutor executor;
         executor.setXorSecret("QWEQWE");
-        executor.setDebugMode(false);
+        executor.setDebugMode(true);
         executor.setEntryFile("main.bc");
         executor.setExecutionMode(ExecutionMode::BINARY);
+
+        executor.setLogCallback([](const std::string& log) {
+            printf("%s\n", log.c_str());
+        });
 
         executor.afterContextCreate([](JSRuntime *rt, JSContext *ctx) {
             // 添加自定义库和函数
