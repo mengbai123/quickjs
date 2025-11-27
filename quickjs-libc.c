@@ -451,9 +451,30 @@ uint8_t *js_load_file(JSContext *ctx, size_t *pbuf_len, const char *filename)
     size_t n, len;
     uint8_t *p, *buf, tmp[8192];
 
-    f = fopen(filename, "rb");
+    char filename2[200];
+    strcpy(filename2, filename);
+
+    // 后缀没有.js 添加上.js
+    //    if (!has_suffix(filename2, ".js")) {
+    //        strcat(filename2, ".js");
+    //    }
+
+
+#ifdef _WIN32
+    // 转换为宽字符
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, filename2, -1, NULL, 0);
+    wchar_t* wfilename = (wchar_t*)malloc(wlen * sizeof(wchar_t));
+    MultiByteToWideChar(CP_UTF8, 0, filename2, -1, wfilename, wlen);
+    f = _wfopen(wfilename, L"rb");
+    free(wfilename);  // 释放转换后的内存
     if (!f)
         return NULL;
+#else
+    f = fopen(filename2, "r");
+    if (!f)
+        return NULL;
+#endif
+
     buf = NULL;
     len = 0;
     do {
