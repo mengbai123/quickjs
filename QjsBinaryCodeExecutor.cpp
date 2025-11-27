@@ -107,6 +107,7 @@ JSContext *QjsBinaryCodeExecutor::createCustomContext(JSRuntime *rt) const {
         // 预加载所有 load_only=1 的模块
         for (const auto &mod: modules_) {
             if (mod.load_only) {
+                debugLog("js_std_eval_binary_bool size: " + std::to_string(mod.data.size()));
                 js_std_eval_binary_bool(ctx, mod.data.data(), mod.data.size(), true);
             }
         }
