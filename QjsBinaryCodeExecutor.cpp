@@ -96,6 +96,13 @@ JSContext *QjsBinaryCodeExecutor::createCustomContext(JSRuntime *rt) const {
     if (!ctx)
         return nullptr;
 
+    // 触发上下文创建后回调
+    // 要比二进制的模块先执行 才能避免有的模块如Jni找不到
+    if (afterContextCreateCallback_) {
+        debugLog("执行 afterContextCreate 回调...");
+        afterContextCreateCallback_(rt, ctx);
+    }
+
     if (executionMode_ == ExecutionMode::BINARY) {
         // 预加载所有 load_only=1 的模块
         for (const auto &mod: modules_) {
@@ -103,12 +110,6 @@ JSContext *QjsBinaryCodeExecutor::createCustomContext(JSRuntime *rt) const {
                 js_std_eval_binary_bool(ctx, mod.data.data(), mod.data.size(), true);
             }
         }
-    }
-
-    // 触发上下文创建后回调
-    if (afterContextCreateCallback_) {
-        debugLog("执行 afterContextCreate 回调...");
-        afterContextCreateCallback_(rt, ctx);
     }
 
     return ctx;
