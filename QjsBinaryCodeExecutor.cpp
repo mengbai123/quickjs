@@ -72,6 +72,14 @@ void QjsBinaryCodeExecutor::loadModulesFromFile(const std::string &filename) {
             return;
         }
 
+        // 如果设置了 xor_secret，对数据进行解密
+        if (!xor_secret_.empty()) {
+            size_t secret_len = xor_secret_.length();
+            for (size_t i = 0; i < data_length; i++) {
+                data[i] ^= xor_secret_[i % secret_len];
+            }
+        }
+
         // 添加到模块列表
         modules_.push_back({load_only != 0, std::move(data)});
         module_index++;

@@ -13,7 +13,7 @@ struct JSContext;
  */
 enum class ExecutionMode {
     BINARY, // 二进制字节码模式
-    JS      // JavaScript 源代码模式
+    JS // JavaScript 源代码模式
 };
 
 /**
@@ -111,7 +111,8 @@ public:
         errorCallback_ = std::move(callback);
     }
 
-    void onJsError(std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &, const std::string &)> callback) {
+    void onJsError(std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &,
+                                      const std::string &)> callback) {
         jsErrorCallback_ = std::move(callback);
     }
 
@@ -175,6 +176,21 @@ public:
     // 公开的静态回调函数，供 QuickJS 的 C API 调用
     static JSContext *workerContextCallback(JSRuntime *rt, void *userdata);
 
+    /**
+ * @brief 设置 XOR 加密密钥
+ * @param secret 用于加密/解密字节码的密钥字符串
+ *
+ * 如果设置为空字符串，则不进行加解密操作。
+ * 密钥会在保存和加载二进制文件时自动应用。
+ */
+    void setXorSecret(const std::string &secret) { xor_secret_ = secret; }
+
+    /**
+     * @brief 获取当前 XOR 加密密钥
+     * @return 当前设置的密钥字符串
+     */
+    const std::string &getXorSecret() const { return xor_secret_; }
+
 private:
     // 模块数据结构
     struct Module {
@@ -186,7 +202,8 @@ private:
     JSRuntime *runtime_ = nullptr; // JS 运行时实例
     JSContext *context_ = nullptr; // JS 上下文实例
     std::function<void(JSRuntime *, JSContext *, const std::string &)> errorCallback_; // 错误回调
-    std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &, const std::string &)> jsErrorCallback_; // 错误回调
+    std::function<void(JSRuntime *, JSContext *, const std::string &, const std::string &, const std::string &)>
+    jsErrorCallback_; // 错误回调
     std::function<void(JSRuntime *, JSContext *)> afterExecuteCallback_; // 执行完成后回调
     std::function<void(JSRuntime *, JSContext *)> beforeReleaseCallback_; // 资源释放前回调
     std::function<void(JSRuntime *, JSContext *)> afterContextCreateCallback_; // 上下文创建后回调
@@ -194,6 +211,8 @@ private:
     bool debugEnabled_ = false; // 调试模式开关
     std::string entryFile_ = "main.js"; // 入口执行文件路径，默认为 main.js
     ExecutionMode executionMode_ = ExecutionMode::BINARY; // 执行模式，默认为二进制模式
+
+    std::string xor_secret_; // XOR 加密密钥
 
     // 创建自定义上下文（供 Worker 线程调用）
     JSContext *createCustomContext(JSRuntime *rt) const;

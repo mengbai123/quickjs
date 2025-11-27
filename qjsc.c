@@ -60,6 +60,8 @@ static FILE *outfile;
 static const char *c_ident_prefix = "qjsc_";
 static int strip;
 
+const char *xor_secret;
+
 void namelist_add(namelist_t *lp, const char *name, const char *short_name,
                   int flags)
 {
@@ -175,6 +177,20 @@ static void output_object_code(JSContext *ctx,
 
     if (output_type == OUTPUT_RAW) {
         printf("name: %s len=%zu load_only=%d\n", c_name, out_buf_len, load_only);
+        printf("xor_secret: %s\n", xor_secret);
+
+        if (xor_secret) {
+            // 如果设置了 xor_secret（字符串） 对out_buf进行一轮xor加密
+            size_t secret_len = strlen(xor_secret);
+            // 使用密钥循环应用XOR加密
+            for (size_t i = 0; i < out_buf_len; i++) {
+                out_buf[i] ^= xor_secret[i % secret_len];
+            }
+        }
+
+        // uint16_t name_len = (uint16_t) strlen(c_name);
+        // fwrite(&name_len, sizeof(uint16_t), 1, fo);
+        // fwrite(c_name, 1, name_len, fo);
         fwrite(&load_only, sizeof(uint8_t), 1, fo);
         fwrite(&out_buf_len, sizeof(uint64_t), 1, fo);
         fwrite(out_buf, 1, out_buf_len, fo);
@@ -451,6 +467,14 @@ int main(int argc, char **argv)
             }
             if (opt == 'b') {
                 output_type = OUTPUT_RAW;
+                continue;
+            }
+            if (opt == 'x') {
+                if (!optarg) {
+                    check_hasarg(optind, argc, opt);
+                    optarg = argv[optind++];
+                }
+                xor_secret = optarg;
                 continue;
             }
             if (opt == 'o') {
